@@ -18,8 +18,8 @@
   },
   "scripts": {
     "start": "yarn run build:styles && react-scripts start",
-    "build": "react-scripts build",
-    "build:styles": "tailwind build src/styles/index.css -o src/styles.css",
+    "build": "yarn run build:styles && react-scripts build",
+    "build:styles": "postcss src/styles/index.css -o src/styles.css",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -39,7 +39,9 @@
     ]
   },
   "devDependencies": {
+    "@fullhuman/postcss-purgecss": "^2.0.6",
     "autoprefixer": "^9.7.4",
+    "postcss-cli": "^7.1.0",
     "prettier": "1.19.1"
   }
 }
