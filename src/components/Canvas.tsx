@@ -7,17 +7,7 @@ const CANVAS_SIZE = 2048
 
 const Canvas = () => {
   const [isMouseDown, setIsMouseDown] = useState<boolean>(false)
-  const handleMouseMove = useCallback(
-    (ctx: CanvasRenderingContext2D, x: number, y: number) => {
-      if (!isMouseDown) return
 
-      ctx.lineTo(x, y)
-
-      ctx.lineWidth = 10
-      ctx.stroke()
-    },
-    [isMouseDown]
-  )
   const { canvasRef, ctx, canvasBoundingRect } = useCanvas({
     scale: 0.25,
     backgroundColor: 'white',
@@ -25,13 +15,9 @@ const Canvas = () => {
       ctx.moveTo(x, y)
       setIsMouseDown(true)
     },
-    onMouseUp: (ctx: CanvasRenderingContext2D, x: number, y: number) => {
-      setIsMouseDown(false)
-    },
-    onMouseMove: handleMouseMove,
   })
 
-  // Prevent mouse from going outside canvas
+  // Handle mouse movement
   useEffect(() => {
     const handleMouseOutsideCanvas = (ev: MouseEvent) => {
       if (!isMouseDown || !ctx) return
@@ -39,32 +25,24 @@ const Canvas = () => {
       const mouseX = ev.clientX
       const mouseY = ev.clientY
 
-      if (
-        mouseX < canvasBoundingRect.left ||
-        mouseX > canvasBoundingRect.right ||
-        mouseY < canvasBoundingRect.top ||
-        mouseY > canvasBoundingRect.bottom
-      ) {
-        // Find corresponding point to canvas edge
-        let x = mapVal(
-          mouseX,
-          canvasBoundingRect.left,
-          canvasBoundingRect.right,
-          0,
-          CANVAS_SIZE
-        )
-        let y = mapVal(
-          mouseY,
-          canvasBoundingRect.top,
-          canvasBoundingRect.bottom,
-          0,
-          CANVAS_SIZE
-        )
+      let x = mapVal(
+        mouseX,
+        canvasBoundingRect.left,
+        canvasBoundingRect.right,
+        0,
+        CANVAS_SIZE
+      )
+      let y = mapVal(
+        mouseY,
+        canvasBoundingRect.top,
+        canvasBoundingRect.bottom,
+        0,
+        CANVAS_SIZE
+      )
 
-        ctx.lineTo(x, y)
-        ctx.lineWidth = 10
-        ctx.stroke()
-      }
+      ctx.lineTo(x, y)
+      ctx.lineWidth = 10
+      ctx.stroke()
     }
 
     document.addEventListener('mousemove', handleMouseOutsideCanvas)
