@@ -1,5 +1,6 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
+import mapVal from '../util/mapVal'
 import useCanvas from '../hooks/useCanvas'
 
 const CANVAS_SIZE = 2048
@@ -17,7 +18,7 @@ const Canvas = () => {
     },
     [isMouseDown]
   )
-  const { canvasRef, ctx } = useCanvas({
+  const { canvasRef, ctx, canvasBoundingRect } = useCanvas({
     scale: 0.25,
     backgroundColor: 'white',
     onMouseDown: (ctx: CanvasRenderingContext2D, x: number, y: number) => {
@@ -29,6 +30,55 @@ const Canvas = () => {
     },
     onMouseMove: handleMouseMove,
   })
+
+  // Prevent mouse from going outside canvas
+  useEffect(() => {
+    const handleMouseOutsideCanvas = (ev: MouseEvent) => {
+      if (!isMouseDown || !ctx) return
+
+      const mouseX = ev.clientX
+      const mouseY = ev.clientY
+
+      if (
+        mouseX < canvasBoundingRect.left ||
+        mouseX > canvasBoundingRect.right ||
+        mouseY < canvasBoundingRect.top ||
+        mouseY > canvasBoundingRect.bottom
+      ) {
+        // Find corresponding point to canvas edge
+        let x = mapVal(
+          mouseX,
+          canvasBoundingRect.left,
+          canvasBoundingRect.right,
+          0,
+          CANVAS_SIZE
+        )
+        let y = mapVal(
+          mouseY,
+          canvasBoundingRect.top,
+          canvasBoundingRect.bottom,
+          0,
+          CANVAS_SIZE
+        )
+
+        ctx.lineTo(x, y)
+        ctx.lineWidth = 10
+        ctx.stroke()
+      }
+    }
+
+    document.addEventListener('mousemove', handleMouseOutsideCanvas)
+    return () =>
+      document.removeEventListener('mousemove', handleMouseOutsideCanvas)
+  }, [canvasBoundingRect, ctx, isMouseDown])
+
+  // Handle mouse up not only within canvas, but within entire page
+  useEffect(() => {
+    const handleMouseUp = () => setIsMouseDown(false)
+
+    document.addEventListener('mouseup', handleMouseUp)
+    return () => document.removeEventListener('mouseup', handleMouseUp)
+  }, [])
 
   const clearDrawing = useCallback(() => {
     if (!canvasRef.current || !ctx) return

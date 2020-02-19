@@ -16,8 +16,10 @@ const useCanvas = ({
   onMouseMove,
 }: CanvasOptions) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [canvasOffset, setCanvasOffset] = useState<[number, number]>([0, 0])
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null)
+  const [canvasBoundingRect, setCanvasBoundingRect] = useState<DOMRect>(
+    new DOMRect()
+  )
 
   // Set canvas size to scale
   useEffect(() => {
@@ -42,7 +44,7 @@ const useCanvas = ({
     const updateCanvasOffset = () => {
       if (!canvasRef.current) return
       const boundingRect = canvasRef.current.getBoundingClientRect()
-      setCanvasOffset([boundingRect.left, boundingRect.top])
+      setCanvasBoundingRect(boundingRect)
     }
 
     updateCanvasOffset()
@@ -69,8 +71,8 @@ const useCanvas = ({
     ) => {
       if (!fn) return
 
-      const x = (ev.clientX - canvasOffset[0]) * (1 / (scale || 1))
-      const y = (ev.clientY - canvasOffset[1]) * (1 / (scale || 1))
+      const x = (ev.clientX - canvasBoundingRect.left) * (1 / (scale || 1))
+      const y = (ev.clientY - canvasBoundingRect.top) * (1 / (scale || 1))
 
       return fn(ctx, x, y)
     }
@@ -94,11 +96,12 @@ const useCanvas = ({
       canvasRef.current.removeEventListener('mouseup', handleMouseUp)
       canvasRef.current.removeEventListener('mousemove', handleMouseMove)
     }
-  }, [canvasRef, ctx, canvasOffset, onMouseDown, onMouseUp, onMouseMove])
+  }, [canvasRef, ctx, canvasBoundingRect, onMouseDown, onMouseUp, onMouseMove])
 
   return {
     canvasRef,
     ctx,
+    canvasBoundingRect,
   }
 }
 
