@@ -23,7 +23,7 @@ const useCanvas = ({
 
   // Set canvas size to scale
   useEffect(() => {
-    if (!canvasRef.current || scale == null || scale == 1) return
+    if (!canvasRef.current || scale == null || scale === 1) return
 
     canvasRef.current.style.width = `${canvasRef.current.width * scale}px`
     canvasRef.current.style.height = `${canvasRef.current.height * scale}px`
@@ -65,6 +65,8 @@ const useCanvas = ({
   useEffect(() => {
     if (!canvasRef.current || !ctx) return
 
+    const canvasEl = canvasRef.current
+
     const handleMouseEvent = (
       ev: MouseEvent,
       fn?: (ctx: CanvasRenderingContext2D, x: number, y: number) => void
@@ -85,18 +87,26 @@ const useCanvas = ({
     const handleMouseMove = (ev: MouseEvent) =>
       handleMouseEvent(ev, onMouseMove)
 
-    canvasRef.current.addEventListener('mousedown', handleMouseDown)
-    canvasRef.current.addEventListener('mouseup', handleMouseUp)
-    canvasRef.current.addEventListener('mousemove', handleMouseMove)
+    canvasEl.addEventListener('mousedown', handleMouseDown)
+    canvasEl.addEventListener('mouseup', handleMouseUp)
+    canvasEl.addEventListener('mousemove', handleMouseMove)
 
     return () => {
-      if (!canvasRef.current) return
+      if (!canvasEl) return
 
-      canvasRef.current.removeEventListener('mousedown', handleMouseDown)
-      canvasRef.current.removeEventListener('mouseup', handleMouseUp)
-      canvasRef.current.removeEventListener('mousemove', handleMouseMove)
+      canvasEl.removeEventListener('mousedown', handleMouseDown)
+      canvasEl.removeEventListener('mouseup', handleMouseUp)
+      canvasEl.removeEventListener('mousemove', handleMouseMove)
     }
-  }, [canvasRef, ctx, canvasBoundingRect, onMouseDown, onMouseUp, onMouseMove])
+  }, [
+    canvasRef,
+    ctx,
+    canvasBoundingRect,
+    scale,
+    onMouseDown,
+    onMouseUp,
+    onMouseMove,
+  ])
 
   return {
     canvasRef,

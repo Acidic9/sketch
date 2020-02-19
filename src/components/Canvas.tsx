@@ -3,9 +3,19 @@ import React, { useCallback, useEffect, useState } from 'react'
 import mapVal from '../util/mapVal'
 import useCanvas from '../hooks/useCanvas'
 
-const CANVAS_SIZE = 2048
+interface Props {
+  canvasSize: number
+  imageData: ImageData
+  onImageSave?: (data: ImageData) => void
+  onImageDelete?: () => void
+}
 
-const Canvas = () => {
+const Canvas = ({
+  canvasSize,
+  imageData,
+  onImageSave,
+  onImageDelete,
+}: Props) => {
   const [isMouseDown, setIsMouseDown] = useState<boolean>(false)
 
   const { canvasRef, ctx, canvasBoundingRect } = useCanvas({
@@ -16,6 +26,22 @@ const Canvas = () => {
       setIsMouseDown(true)
     },
   })
+
+  const clearDrawing = useCallback(() => {
+    if (!canvasRef.current || !ctx) return
+
+    canvasRef.current.width = canvasSize
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, canvasSize, canvasSize)
+  }, [canvasRef, ctx, canvasSize])
+
+  // Handle image data update
+  useEffect(() => {
+    if (!ctx) return
+
+    clearDrawing()
+    ctx.putImageData(imageData, 0, 0)
+  }, [ctx, imageData, clearDrawing])
 
   // Handle mouse movement
   useEffect(() => {
@@ -30,14 +56,14 @@ const Canvas = () => {
         canvasBoundingRect.left,
         canvasBoundingRect.right,
         0,
-        CANVAS_SIZE
+        canvasSize
       )
       let y = mapVal(
         mouseY,
         canvasBoundingRect.top,
         canvasBoundingRect.bottom,
         0,
-        CANVAS_SIZE
+        canvasSize
       )
 
       ctx.lineTo(x, y)
@@ -48,33 +74,60 @@ const Canvas = () => {
     document.addEventListener('mousemove', handleMouseOutsideCanvas)
     return () =>
       document.removeEventListener('mousemove', handleMouseOutsideCanvas)
-  }, [canvasBoundingRect, ctx, isMouseDown])
+  }, [canvasBoundingRect, ctx, canvasSize, isMouseDown])
+
+  const saveDrawing = useCallback(() => {
+    if (!ctx) return
+
+    const imageData = ctx.getImageData(0, 0, canvasSize, canvasSize)
+
+    if (onImageSave) onImageSave(imageData)
+  }, [ctx, canvasSize, onImageSave])
 
   // Handle mouse up not only within canvas, but within entire page
   useEffect(() => {
-    const handleMouseUp = () => setIsMouseDown(false)
+    const handleMouseUp = () => {
+      if (isMouseDown) {
+        setIsMouseDown(false)
+        saveDrawing()
+      }
+    }
 
     document.addEventListener('mouseup', handleMouseUp)
     return () => document.removeEventListener('mouseup', handleMouseUp)
-  }, [])
+  }, [ctx, saveDrawing, onImageSave, isMouseDown])
 
-  const clearDrawing = useCallback(() => {
-    if (!canvasRef.current || !ctx) return
+  const deleteDrawing = useCallback(() => {
+    const confirmation = window.confirm(
+      'Are you sure you want to delete this drawing?'
+    )
+    if (!confirmation) return
 
-    canvasRef.current.width = CANVAS_SIZE
-    ctx.fillStyle = 'white'
-    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
-  }, [canvasRef, ctx])
+    if (onImageDelete) onImageDelete()
+  }, [onImageDelete])
 
   return (
     <div className="relative">
-      <canvas ref={canvasRef} width={CANVAS_SIZE} height={CANVAS_SIZE}></canvas>
-      <button
-        className="absolute right-0 top-0 text-xs font-bold opacity-75 px-4 py-2 bg-gray-200 cursor-pointer hover:opacity-100"
-        onClick={clearDrawing}
-      >
-        CLEAR
-      </button>
+      <canvas
+        ref={canvasRef}
+        className="bg-white"
+        width={canvasSize}
+        height={canvasSize}
+      ></canvas>
+      <div className="absolute top-0 right-0 flex">
+        <button
+          className="text-xs font-bold opacity-75 px-4 py-2 bg-gray-200 cursor-pointer hover:opacity-100"
+          onClick={clearDrawing}
+        >
+          CLEAR
+        </button>
+        <button
+          className="text-xs font-bold opacity-75 px-4 py-2 bg-gray-200 cursor-pointer hover:opacity-100"
+          onClick={deleteDrawing}
+        >
+          X
+        </button>
+      </div>
     </div>
   )
 }
