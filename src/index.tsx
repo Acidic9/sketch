@@ -1,4 +1,4 @@
-import './index.css'
+import './styles.css'
 
 import * as serviceWorker from './serviceWorker'
 
