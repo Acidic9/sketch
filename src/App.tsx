@@ -85,7 +85,7 @@ const App = () => {
   }, [images, handleNewPage])
 
   return (
-    <div className="flex justify-center items-center bg-gray-900 w-screen min-h-screen">
+    <div className="font-sans flex justify-center items-center bg-gray-900 w-screen min-h-screen">
       <div className="flex bg-gray-200">
         <Sidebar
           images={images}
